@@ -101,7 +101,7 @@ const MODES={
  head:{title:'Head hunt',color:'#ffab80',kind:'face',instruction:'Raak de targets met je hoofd. Buk, spring en verplaats je. De klok loopt door als je uit beeld bent.'},
  runner:{title:'Head runner',color:'#bca3ff',kind:'face',instruction:'Spring boven lage muren en buk onder hoge muren. Random hoogtes en aankomsttijden.'},
  squat:{title:'Jump wings',color:'#ffe397',kind:'face',instruction:'Een kleine sprong geeft je vogeltje een flap. Alleen je hoofd hoeft zichtbaar te zijn.'},
- quest:{title:'Neon quest',color:'#80ccff',kind:'pose',instruction:'Jog rustig op de plaats. Neus naar links/rechts = richting. Spring, dubbel spring en schop om te schieten.'},
+ quest:{title:'Neon quest',color:'#80ccff',kind:'pose',instruction:'Maak afwisselend kleine jogbewegingen. Neus naar links/rechts kiest de richting. Spring, dubbel spring en schop om te schieten.'},
  space:{title:'Space fire',color:'#ff91cb',kind:'pose',instruction:'Stap links/rechts. Til steeds één hand duidelijk boven je schouder voor een grote vuurbal.'},
  duo:{title:'Head + hand',color:'#f8cf6a',kind:'pose',instruction:'Raak de oranje hoofdtargets met je hoofd en de groene handtargets met je hand.'}
 };
@@ -188,7 +188,7 @@ class HeadRunner{
 class HeadJump{
  constructor(b){this.b=b;this.raised=false;this.since=null;this.last=-99;this.requiresNeutral=false;this.filtered=b.head.y;this.baseY=b.head.y;}
  reset(){this.raised=false;this.since=null;this.last=-99;this.requiresNeutral=true;this.filtered=this.b.head.y;this.baseY=this.b.head.y;}
- update(p,t){if(!visible(p?.[0]))return false;const y=p[0].y;this.filtered=this.filtered*.55+y*.45;const rawRise=this.baseY-y,threshold=Math.max(.012,this.b.headRadius*.25);
+ update(p,t){if(!visible(p?.[0]))return false;const y=p[0].y;this.filtered=this.filtered*.55+y*.45;const rawRise=this.baseY-y,threshold=Math.max(.008,this.b.headRadius*.18);
    if(!this.raised&&rawRise<threshold*.35){this.baseY=this.baseY*.92+y*.08;this.requiresNeutral=false;}
    if(this.requiresNeutral)return false;
    if(rawRise>threshold&&!this.raised&&t-this.last>.30){this.since??=t;if(t-this.since>=.04){this.raised=true;this.last=t;this.since=null;return true;}}
@@ -208,27 +208,39 @@ class JumpWings{
  }
  result(){return{mode:this.mode,time:this.time,active:this.active,missing:this.missing,score:this.score,hits:this.hits,misses:this.misses,moves:this.moves,completed:this.done,race:false};}
 }
+class QuestJump{
+ constructor(b){this.b=b;this.raised=false;this.last=-99;this.prevHead=b.head.y;this.prevShoulder=b.shoulder.y;}
+ reset(){this.raised=false;this.last=-99;this.prevHead=this.b.head.y;this.prevShoulder=this.b.shoulder.y;}
+ update(p,t){if(!visible(p?.[0])||!visible(p?.[11])||!visible(p?.[12]))return false;const sh=mid(p[11],p[12]);const liftHead=this.b.head.y-p[0].y,liftShoulder=this.b.shoulder.y-sh.y;const rising=(this.prevHead-p[0].y)+(this.prevShoulder-sh.y);this.prevHead=p[0].y;this.prevShoulder=sh.y;
+   const feet=[p[27],p[28]],feetLift=feet.every(visible)&&this.b.leftFoot&&this.b.rightFoot&&((this.b.leftFoot.y-feet[0].y)+(this.b.rightFoot.y-feet[1].y))>this.b.height*.025;
+   const torsoLift=(liftHead>.022&&liftShoulder>.010)||liftHead>.045;const high=torsoLift||feetLift;
+   if(!high&&liftHead<.006&&liftShoulder<.003)this.raised=false;
+   if(high&&!this.raised&&t-this.last>.42&&(rising>.001||feetLift)){this.raised=true;this.last=t;return true;}
+   return false;
+ }
+}
 function angle(a,b,c,aspect){const x=(a.x-b.x)*aspect,y=a.y-b.y,u=(c.x-b.x)*aspect,v=c.y-b.y;return Math.acos(clamp((x*u+y*v)/(Math.hypot(x,y)*Math.hypot(u,v)||1),-1,1))*180/Math.PI;}
 class QuestMotion{
- constructor(b,c={}){Object.assign(this,{b,c,direction:1,aim:0,candidate:1,candidateSince:0,steps:[],lifted:[false,false],bobDown:false,bobLeg:0,bobLast:-99,kickRaised:false,lastKick:-99,jumpRaised:false,jumpSince:null,needsNeutral:false});this.headJump=new HeadJump(b);this.feetBase=[b.leftFoot,b.rightFoot];this.bobValue=null;this.bobPrev=null;this.lastBobSample=-99;}
- reset(){this.steps=[];this.lifted=[false,false];this.bobDown=false;this.kickRaised=false;this.jumpRaised=false;this.jumpSince=null;this.needsNeutral=true;this.bobValue=null;this.bobPrev=null;this.lastBobSample=-99;this.headJump.reset();}
+ constructor(b,c={}){Object.assign(this,{b,c,direction:1,aim:0,candidate:1,candidateSince:0,steps:[],lifted:[false,false],bobDown:false,bobLeg:0,bobLast:-99,kickRaised:false,lastKick:-99,jumpRaised:false,jumpSince:null,needsNeutral:false});this.headJump=new HeadJump(b);this.questJump=new QuestJump(b);this.feetBase=[b.leftFoot,b.rightFoot];this.bobValue=null;this.bobPrev=null;this.lastBobSample=-99;}
+ reset(){this.steps=[];this.lifted=[false,false];this.bobDown=false;this.kickRaised=false;this.jumpRaised=false;this.jumpSince=null;this.needsNeutral=true;this.bobValue=null;this.bobPrev=null;this.lastBobSample=-99;this.headJump.reset();this.questJump.reset();}
  update(p,t){const b=this.b,shoulder=mid(p[11],p[12]),hip=valid(p[23])&&valid(p[24])?mid(p[23],p[24]):null;
  const lean=((p[0].x-shoulder.x)-(b.noseShoulderOffset||0))/Math.max(.06,b.width/b.aspect);let raw=lean;
  if(this.c.steering!=='lean'){const ears=[p[7],p[8]],eyes=[p[2],p[5]];const usable=v=>v&&Number.isFinite(v.x)&&(v.visibility??1)>.25;if(ears.every(usable)&&Math.abs(ears[0].x-ears[1].x)>.015)raw=(p[0].x-mid(...ears).x)/Math.abs(ears[0].x-ears[1].x)-b.noseOffset;else if(eyes.every(usable)&&Math.abs(eyes[0].x-eyes[1].x)>.015)raw=(p[0].x-mid(...eyes).x)/Math.abs(eyes[0].x-eyes[1].x)-(b.noseEyeOffset||0);if(Math.abs(raw)<.08&&Math.abs(lean)>.20)raw=lean;}
  this.aim=this.aim*.6+clamp(raw,-1,1)*.4;const target=this.aim>.085?1:this.aim<-.085?-1:this.direction;if(target!==this.candidate){this.candidate=target;this.candidateSince=t;}if(target!==this.direction&&t-this.candidateSince>.12)this.direction=target;
  const feet=[p[27],p[28]],bases=this.feetBase;for(let i=0;i<2;i++)if(!bases[i]&&visible(feet[i]))bases[i]={...feet[i],y:Math.max(feet[i].y,(hip?.y??b.hip.y)+b.height*.42)};const feetOK=feet.every(visible)&&bases.every(Boolean);const bothUp=feetOK&&feet.every((f,i)=>bases[i].y-f.y>b.height*.025)&&(!hip||b.hip.y-hip.y>b.height*.025)&&b.head.y-p[0].y>b.height*.025;
- let jump=false;const neutral=!feetOK||feet.every((f,i)=>Math.abs(f.y-bases[i].y)<b.height*.025);if(neutral&&Math.abs(b.head.y-p[0].y)<.018){this.jumpRaised=false;this.needsNeutral=false;}
- if(feetOK){if(bothUp&&!this.jumpRaised&&!this.needsNeutral){this.jumpSince??=t;if(t-this.jumpSince>=.04){jump=true;this.jumpRaised=true;}}if(!bothUp)this.jumpSince=null;}else jump=this.headJump.update(p,t);
+ let jump=this.questJump.update(p,t);const neutral=!feetOK||feet.every((f,i)=>Math.abs(f.y-bases[i].y)<b.height*.025);if(neutral&&Math.abs(b.head.y-p[0].y)<.018){this.jumpRaised=false;this.needsNeutral=false;}
+ if(feetOK&&!jump){if(bothUp&&!this.jumpRaised&&!this.needsNeutral){this.jumpSince??=t;if(t-this.jumpSince>=.04){jump=true;this.jumpRaised=true;}}if(!bothUp)this.jumpSince=null;}
  let kicking=false;for(let i=0;i<2;i++){const h=p[23+i],k=p[25+i],f=feet[i],base=bases[i];if(![h,k,f].every(visible)||!base)continue;const high=base.y-f.y>b.height*.12,side=Math.abs((f.x-h.x)*b.aspect)>b.width*.65,bh=i===0?b.leftHip:b.rightHip,forward=(base.z-(bh?.z??0))-((f.z||0)-(h.z||0))>b.height*.14,other=visible(feet[1-i])&&bases[1-i]?Math.abs(feet[1-i].y-bases[1-i].y)<b.height*.09:true;if(high&&(side||forward)&&other&&!bothUp&&angle(h,k,f,b.aspect)>115)kicking=true;}
  const kick=kicking&&!this.kickRaised&&t-this.lastKick>.65;if(kick)this.lastKick=t;this.kickRaised=kicking;
  if(!kicking){
    if(feetOK&&!bothUp){for(let i=0;i<2;i++){const raised=bases[i].y-feet[i].y>b.height*.014;if(raised&&!this.lifted[i])this.steps.push({leg:i,time:t});this.lifted[i]=raised;}}
-   const sample=(hip?hip.y-b.hip.y:shoulder.y-b.shoulder.y),threshold=Math.max(.005,b.height*.009);
+   const shoulderBob=shoulder.y-b.shoulder.y,hipBob=hip?hip.y-b.hip.y:shoulderBob;
+   const sample=hip?(shoulderBob+hipBob)/2:shoulderBob,threshold=Math.max(.004,b.height*.007);
    this.bobValue=sample;
    if(sample>threshold)this.bobDown=true;
    if(this.bobDown&&sample<-threshold*.25&&t-this.bobLast>.24){this.steps.push({leg:this.bobLeg,time:t});this.bobLeg=1-this.bobLeg;this.bobDown=false;this.bobLast=t;}
  } else {this.bobDown=false;this.bobPrev=null;}
- this.steps=this.steps.filter(s=>t-s.time<1.6).slice(-6);const one=this.steps.at(-1),two=this.steps.at(-2);return{jump,kick,running:!!one&&!!two&&one.leg!==two.leg&&t-one.time<1.1,direction:this.direction,aim:this.aim};
+ this.steps=this.steps.filter(s=>t-s.time<1.6).slice(-6);const one=this.steps.at(-1),two=this.steps.at(-2);return{jump,kick,running:!!one&&!!two&&one.leg!==two.leg&&t-one.time<1.4,direction:this.direction,aim:this.aim};
  }
 }
 class Quest{
@@ -350,7 +362,7 @@ class View{
   for(const p of g.projectiles){c.fillStyle='#ffe397';c.shadowColor='#ffe397';c.shadowBlur=12;c.beginPath();c.arc(X(p.x),Y(p.y),.13*unit,0,Math.PI*2);c.fill();c.shadowBlur=0;}
   c.fillStyle='#a9c7d5';c.fillRect(X(g.flagX),Y(2),.055*unit,3.2*unit);c.fillStyle='#80f7d1';c.beginPath();c.moveTo(X(g.flagX+.055),Y(2));c.lineTo(X(g.flagX+1),Y(2.35));c.lineTo(X(g.flagX+.055),Y(2.7));c.fill();
   const a=g.avatar;if(!(g.invulnerable>0&&Math.floor(g.time*12)%2))this.avatar(X(a.x),Y(a.y),unit,a,g.time);for(const [x,text]of [[7,'SPRING →'],[28,'SPRING →'],[41,'DUBBEL ↑↑']])if(x>xoff-2&&x<xoff+b.w/unit){c.fillStyle='#d0e8ee';c.font=`800 ${Math.max(14,b.h*.035)}px system-ui`;c.textAlign='center';c.fillText(text,X(x),Y(4.75));}c.restore();
-  c.fillStyle='#80ccff';c.font=`800 ${Math.max(14,Math.min(24,b.h*.033))}px system-ui`;c.textAlign='left';c.fillText(`RICHTING ${a.dir>0?'→':'←'} · SPRONG ${a.jumps}/2`,b.x+14,b.y+26);
+  c.fillStyle='#80ccff';c.font=`800 ${Math.max(14,Math.min(24,b.h*.033))}px system-ui`;c.textAlign='left';c.fillText(`RICHTING ${a.dir>0?'→':'←'} · LOPEN ${Math.abs(a.vx)>.2?'✓':'…'} · SPRONG ${a.jumps}/2`,b.x+14,b.y+26);
  }
  avatar(x,y,u,a,t){const c=this.c,w=a.w*u,h=a.h*u,step=a.onGround&&Math.abs(a.vx)>.3?Math.sin(t*16)*.08*u:0;c.fillStyle='#80ccff';c.fillRect(x+w*.15,y+h*.04,w*.7,h*.28);c.fillStyle='#e1f4ff';c.fillRect(x+w*(a.dir>0?.62:.08),y+h*.11,w*.27,h*.07);c.fillStyle='#80f7d1';c.fillRect(x+w*.1,y+h*.34,w*.8,h*.32);c.fillStyle='#497cb0';c.fillRect(x+w*.15,y+h*.66,w*.25,h*.29+step);c.fillRect(x+w*.6,y+h*.66,w*.25,h*.29-step);c.fillStyle='#d2e9ff';c.fillRect(x+w*.05,y+h*.9+step,w*.4,h*.1);c.fillRect(x+w*.55,y+h*.9-step,w*.4,h*.1);}
  space(g,s){const c=this.c,b=this.b;c.save();c.beginPath();c.rect(b.x,b.y,b.w,b.h);c.clip();
@@ -440,7 +452,7 @@ function updateUI(){const running=busy(),cc=running?c:config(),race=isRace(mode,
  const statuses={off:'Zet de camera aan',loading:'Herkenning laden',calibrating:'Sta rustig rechtop',ready:'Klaar voor de start',switching:'Volgende modus laden',countdown:'Vijf seconden voorbereiding',playing:trackingLost?'Tijd loopt · kom terug in beeld':MODES[mode].title,rest:'Hersteltijd',paused:'Handmatig gepauzeerd',finished:'Challenge afgerond'};$('roundStatus').textContent=statuses[phase];
  const hits=game?.hits??game?.index??latestResult?.hits??0;$('progressLabel').textContent=mode==='quest'?'LEVEL':mode==='hand'||mode==='head'||mode==='duo'?'TARGETS':'GELUKT';$('combo').textContent=mode==='quest'?`${Math.round((game?clamp(game.avatar.x/game.flagX,0,1):latestResult?.progress||0)*100)}%`:['hand','head','duo'].includes(mode)&&race?`${hits}/${cc.targets}`:String(hits);$('progressNote').textContent=mode==='quest'?'Bereik de vlag':mode==='space'?'Aliens geraakt':'Blijf bewegen';$('stageScore').textContent=mode==='quest'?`LEVEL ${$('combo').textContent} · ${score} PUNTEN`:`${hits} GELUKT · ${score} PUNTEN`;
  const active=session?(session.rounds.reduce((n,r)=>n+(r.active??r.time),0)+(game?.active||0)):phase==='finished'?latest?.rounds.reduce((n,r)=>n+(r.active??r.time),0)||0:0;$('activeTime').textContent=`${active.toFixed(1)} s`;const en=kcal(active);$('energyReadout').textContent=en===null?`Fouten: ${game?.misses??latestResult?.misses??0}`:`Rekenvoorbeeld ~${en.toFixed(1)} kcal`;
- $('challengeField').hidden=!['hand','head','duo'].includes(mode);$('raceSettings').hidden=!['hand','head','duo'].includes(mode);$('targetField').hidden=!race;$('durationField').hidden=mode==='quest'||race&&!cc.circuit;$('floorField').hidden=mode!=='head';$('steeringField').hidden=mode!=='quest';$('movementHelp').textContent=mode==='quest'?'Hoofd en schouders nodig. Benen optioneel: joggen kan ook via ritme van het bovenlichaam. Schoppen vraagt één zichtbaar been.':mode==='hand'?'Hoofd, schouders en één hand. Raak links, midden en rechts. Benen niet nodig.':mode==='duo'?'Hoofd, schouders en één hand. Oranje is hoofd, groen is hand. Alleen het juiste lichaamsdeel telt.':mode==='space'?'Hoofd en schouders. Eén hand rustig omlaag en daarna boven de schouder geeft een vuurbal.':mode==='quest'?'Hoofd en schouders nodig. Benen optioneel: joggen kan ook via ritme van het bovenlichaam. Schoppen vraagt één zichtbaar been.':'Alleen het gezicht nodig. Benen en voeten worden niet gevolgd.';
+ $('challengeField').hidden=!['hand','head','duo'].includes(mode);$('raceSettings').hidden=!['hand','head','duo'].includes(mode);$('targetField').hidden=!race;$('durationField').hidden=mode==='quest'||race&&!cc.circuit;$('floorField').hidden=mode!=='head';$('steeringField').hidden=mode!=='quest';$('movementHelp').textContent=mode==='quest'?'Hoofd en schouders nodig. Jog met twee korte ritmebewegingen; benen zijn optioneel. Schoppen vraagt één zichtbaar been.':mode==='hand'?'Hoofd, schouders en één hand. Raak links, midden en rechts. Benen niet nodig.':mode==='duo'?'Hoofd, schouders en één hand. Oranje is hoofd, groen is hand. Alleen het juiste lichaamsdeel telt.':mode==='space'?'Hoofd en schouders. Eén hand rustig omlaag en daarna boven de schouder geeft een vuurbal.':mode==='quest'?'Hoofd en schouders nodig. Jog met twee korte ritmebewegingen; benen zijn optioneel. Schoppen vraagt één zichtbaar been.':'Alleen het gezicht nodig. Benen en voeten worden niet gevolgd.';
  if(phase==='off')overlay('◉','Kies je game.','Camera aan, neem ongeveer 3 m afstand en sta even rustig rechtop.');else if(phase==='loading'||phase==='switching')overlay('◌','Herkenning laden…','Camerabeelden blijven op je apparaat.');else if(phase==='calibrating')overlay('◎','Neem je speelplek in.',body.ready?'Sta 1,2 seconde rustig rechtop. Kijk naar de camera.':body.message);else if(phase==='ready')overlay('↟','Klaar voor actie.',$('autoStart').checked?`Automatisch starten over ${Math.max(1,Math.ceil((2000-(performance.now()-readyAt))/1000))} s. Daarna 5 s voorbereiding.`:'Start met de knop. Je krijgt 5 s om terug te lopen. Handen klappen werkt bij Hand rush, Neon quest en Space fire.',true);else if(phase==='countdown')overlay(String(Math.max(1,Math.ceil(countdown))),'Maak je klaar.','Loop terug naar je plek. De ronde start ook als je even uit beeld bent.');else if(phase==='playing')$('overlay').hidden=true;else if(phase==='rest')overlay('◷',`${Math.ceil(rest)} s herstel`,'Volgende game start automatisch na de nieuwe lichaamscheck.');else if(phase==='paused')overlay('Ⅱ','Handmatige pauze.','Spel en klok staan stil. Verder geeft opnieuw 5 s voorbereiding.',false,true);else if(phase==='finished')overlay('✦','Ronde afgerond.','Je resultaat is bewaard. Wissel van game of speel opnieuw.',!!cal.value);
  $('startBtn').textContent=phase==='finished'?'Opnieuw spelen':'Start met 5 s voorbereiding';
 }
