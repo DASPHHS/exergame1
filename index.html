@@ -1,0 +1,611 @@
+<!doctype html>
+<!--
+MIT License
+
+Copyright (c) 2026 FITCADE contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+MediaPipe Tasks Vision 1.1.0 and the Pose Landmarker Lite model are provided by Google under Apache-2.0.
+License: https://www.apache.org/licenses/LICENSE-2.0
+MET reference values: 2024 Adult Compendium of Physical Activities, Video Games.
+https://pacompendium.com/video-games/
+-->
+<html lang="nl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101b27"><meta name="description" content="Een gratis camera-exergame voor de gymles. Ontwijk, raak en spring met je hele lichaam.">
+  <title>FITCADE · Beweeg. Speel. Groei.</title>
+  
+<style>
+:root{color-scheme:dark;--bg:#0b141e;--panel:#111e2c;--line:#263342;--muted:#9caebf;--text:#f1f5f8;--mint:#80f7d1;--orange:#ffab80;--purple:#bca3ff;--radius:18px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#182b36 0%,transparent 45%),var(--bg);color:var(--text);font-size:14px;line-height:1.5}button,input,select{font:inherit}button,a,input,select,summary{ -webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:default;opacity:.4}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:4px}a{color:inherit;text-decoration:none}[hidden]{display:none!important}.topbar{height:92px;max-width:1500px;margin:auto;padding:0 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;font-size:25px;font-weight:900;letter-spacing:1.5px}.brand small{display:block;font-size:8px;font-weight:600;letter-spacing:2px;color:var(--muted);margin-top:1px}.brand-mark{background:var(--mint);color:var(--bg);width:43px;height:43px;border-radius:12px;display:grid;place-items:center;position:relative;font-size:30px;font-style:italic}.brand-mark span{position:absolute;font-size:20px;right:4px;bottom:0;line-height:1}.top-actions{display:flex;align-items:center;gap:16px}.local-pill{font-size:11px;letter-spacing:.3px;color:var(--muted);margin-right:10px}.local-pill i,.live-badge i{display:inline-block;width:6px;height:6px;background:var(--mint);border-radius:50%;margin-right:7px}.icon-button{border:1px solid var(--line);background:transparent;border-radius:9px;color:var(--text);padding:8px 12px}.icon-button:hover{background:#203141}.icon-button span{font-size:12px;margin-left:5px}main{max-width:1500px;margin:auto;padding:32px 40px 0}.workspace{display:grid;grid-template-columns:285px minmax(0,1fr);gap:34px}.control-panel{padding:4px 0}.eyebrow{font-size:9px;letter-spacing:2px;font-weight:800;color:var(--mint)}h1{font-size:48px;line-height:1.06;letter-spacing:-2px;margin:14px 0 16px}h1 em{font-style:normal;color:var(--mint)}.intro{color:var(--muted);font-size:13px;max-width:260px;margin-bottom:24px}.step-card{display:flex;gap:12px;margin:17px 0}.step-number{border:1px solid #375044;background:#162d2d;color:var(--mint);border-radius:8px;height:30px;width:30px;display:grid;place-items:center;flex-shrink:0;font-size:11px;font-weight:700}.step-card strong{font-size:12px}.step-card p{font-size:11px;color:var(--muted);margin:4px 0 0;line-height:1.7}.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid transparent;border-radius:10px;min-height:44px;padding:10px 16px;font-size:12px;font-weight:700;transition:background .15s,transform .15s}.button:not(:disabled):active{transform:scale(.98)}.primary{background:var(--mint);color:#102623}.primary:hover{background:#a6ffe2}.secondary{background:#1b2b3a;border-color:#304455;color:var(--text)}.secondary:hover{background:#293d4e}.wide{width:100%;margin:8px 0 0}.status-note{color:var(--muted);font-size:10px;line-height:1.7;margin:10px 0}.divider{height:1px;background:var(--line);margin:22px 0}.field{display:block;font-size:11px;font-weight:600;margin:14px 0;color:#d1dce6}.field>span{font-size:9px;color:var(--muted);font-weight:400;float:right}.field input:not([type=range]),.field select{display:block;width:100%;border:1px solid #304050;border-radius:9px;background:#132231;color:var(--text);padding:10px 11px;margin-top:7px;min-height:41px}.field input::placeholder{color:#7e94a7}.two-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.toggle{display:flex;gap:10px;align-items:center;position:relative;cursor:pointer;margin:17px 0;font-size:11px;font-weight:600}.toggle input{position:absolute;opacity:0;width:32px;height:24px;left:0}.toggle>span{width:30px;height:18px;background:#374759;border-radius:20px;position:relative;flex-shrink:0;transition:background .2s}.toggle>span:after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#cad7df;left:3px;top:3px;transition:left .2s}.toggle input:checked+span{background:var(--mint)}.toggle input:checked+span:after{background:#153530;left:15px}.toggle input:focus-visible+span{outline:3px solid var(--mint);outline-offset:3px}.toggle small{display:block;color:var(--muted);font-weight:400;font-size:10px;margin-top:2px}.settings{margin-top:20px;border-top:1px solid var(--line)}summary{cursor:pointer;font-size:11px;padding:16px 0;list-style:none;font-weight:600}summary::-webkit-details-marker{display:none}summary span{float:right}.settings[open] summary span{transform:rotate(45deg)}.settings-body{padding-bottom:10px}.play-heading{display:flex;justify-content:space-between;align-items:center;margin:3px 0 20px}.play-heading h2{font-size:19px;letter-spacing:-.5px;margin:6px 0 0}.round-label{font-size:9px;color:var(--muted);border:1px solid var(--line);padding:6px 9px;border-radius:20px;font-weight:700;letter-spacing:1px}.mode-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}.mode{background:#152331;border:1px solid var(--line);border-radius:12px;min-height:72px;text-align:left;color:var(--text);display:flex;align-items:center;gap:12px;padding:12px 15px;position:relative}.mode:hover{background:#1c3040}.mode.active{background:#1b3635;border-color:var(--mint)}.mode[data-mode=dodge].active{background:#392d26;border-color:var(--orange)}.mode[data-mode=jump].active{background:#302b41;border-color:var(--purple)}.mode-icon{font-size:25px;color:var(--mint)}.mode[data-mode=dodge] .mode-icon{color:var(--orange)}.mode[data-mode=jump] .mode-icon{color:var(--purple)}.mode>span:nth-child(2){font-size:12px;font-weight:800;line-height:1.4}.mode small{display:block;font-size:9px;font-weight:400;color:var(--muted);margin-top:3px}.mode b{font-size:9px;color:#6e8799;position:absolute;right:12px;top:9px}.stage{position:relative;width:100%;aspect-ratio:16/10;min-height:300px;overflow:hidden;border-radius:var(--radius);border:1px solid #324355;background:#111d28;isolation:isolate}#video{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}#gameCanvas{width:100%;height:100%;display:block}.stage-top{position:absolute;left:20px;right:16px;top:16px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.live-badge{font-size:9px;font-weight:700;letter-spacing:1.2px;padding:7px 10px;border:1px solid #496172;background:#0b1628bd;border-radius:7px}.live-badge i{background:#8096a7}.live-badge.live i{background:var(--mint)}.stage-button{color:var(--text);background:#102235b3;border:1px solid #496172;border-radius:7px;font-size:23px;width:34px;height:32px;line-height:1;pointer-events:auto}.stage-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:58px 24px 90px;pointer-events:none}.overlay-card{text-align:center;max-width:350px;background:#0c1a29ed;border:1px solid #3a5161;border-radius:18px;padding:22px 30px;box-shadow:0 20px 60px #07101770;pointer-events:auto;backdrop-filter:blur(8px)}.overlay-symbol{color:var(--mint);font-size:28px;font-weight:800}.overlay-card h3{font-size:24px;letter-spacing:-.7px;margin:8px 0}.overlay-card p{font-size:12px;color:#bccbda;margin:8px 0 12px;line-height:1.6}.overlay-card .button{margin-top:6px}.body-check{position:absolute;bottom:53px;left:50%;transform:translateX(-50%);background:#0d1b28e8;border:1px solid #394c5d;border-radius:8px;min-width:255px;max-width:85%;font-size:10px;padding:8px 12px;text-align:center;transition:opacity .2s}.check-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--orange);margin-right:6px}.body-check.ok .check-dot{background:var(--mint)}.check-progress{width:100%;height:2px;background:#2a4051;margin-top:6px;border-radius:4px;overflow:hidden}.check-progress i{display:block;height:100%;width:0;background:var(--mint);transition:width .2s}.stage-bottom{position:absolute;bottom:0;left:0;right:0;min-height:41px;padding:10px 16px;background:#0b1727e8;border-top:1px solid #354957;display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:10px;color:#c1d0dc}.tracking-rate{color:#8ba3b7;font-size:9px;white-space:nowrap}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.stat{background:#132130;border:1px solid var(--line);border-radius:12px;padding:15px 18px}.stat>span{font-size:8px;color:var(--muted);letter-spacing:1.2px;font-weight:700}.stat strong{display:block;font-size:29px;font-weight:800;letter-spacing:-1px;line-height:1.3;margin-top:5px;font-variant-numeric:tabular-nums}.stat strong span{font-size:17px;color:#8096a7;letter-spacing:0;margin-left:4px}.stat small{font-size:9px;color:#8aa0b4;display:block;margin-top:3px}.stat:first-child strong{color:var(--mint)}.session-controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.session-controls .button{min-height:35px;padding:8px 12px;font-size:11px}.text-button{background:transparent;border:0;color:var(--muted);font-size:10px;padding:5px 0}.text-button:hover{color:var(--text)}#demoControls{font-size:9px;color:var(--muted);max-width:240px;margin-left:auto}.lesson-panel{display:grid;grid-template-columns:1.12fr repeat(3,1fr);gap:24px;margin:32px 0 20px;padding:26px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.lesson-intro h2{font-size:24px;line-height:1.2;letter-spacing:-.7px;margin:10px 0}.lesson-panel p{font-size:11px;color:var(--muted);line-height:1.8;margin:8px 0}.lesson-panel article{border-left:1px solid var(--line);padding-left:24px}.lesson-number{font-size:8px;color:var(--mint);font-weight:700;letter-spacing:1.2px}.lesson-panel article:nth-child(3) .lesson-number{color:var(--orange)}.lesson-panel article:nth-child(4) .lesson-number{color:var(--purple)}.lesson-panel h3{font-size:13px;margin:14px 0 9px}footer{max-width:1500px;margin:auto;padding:0 40px 26px;display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:9px;gap:20px}footer>span{font-weight:800;color:#b8c7d3;letter-spacing:2px}footer b{font-size:8px;border:1px solid var(--line);padding:3px 5px;margin-left:5px;color:var(--mint)}dialog{color:var(--text);background:#112130;border:1px solid #415c71;border-radius:20px;padding:28px;max-width:570px;width:calc(100% - 32px);max-height:90dvh;box-shadow:0 25px 120px #0009}dialog::backdrop{background:#07101ed6;backdrop-filter:blur(5px)}.dialog-head{display:flex;justify-content:space-between;align-items:center}.dialog-head .icon-button{font-size:22px;line-height:1;padding:5px 10px}dialog h2{font-size:29px;letter-spacing:-1px;margin:15px 0 9px}dialog>p{font-size:12px;color:var(--muted)}.help-list{padding-left:20px}.help-list li{font-size:12px;line-height:1.8;color:#bacbd7;padding:6px 0 6px 4px}.help-list strong{color:var(--text)}.info-box{padding:12px 16px;border-radius:9px;background:#1b3143}.result-rounds{display:grid;gap:9px;margin:20px 0}.result-row{border:1px solid var(--line);border-radius:10px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px}.result-row strong{font-size:24px;color:var(--mint)}.result-row small{display:block;color:var(--muted);font-size:10px}.reflection{background:#182c3b;padding:4px 17px 10px;border-radius:12px}.field strong{float:right;color:var(--mint)}input[type=range]{display:block;width:100%;accent-color:var(--mint);margin:14px 0}.range-labels{float:none!important;display:flex;justify-content:space-between}.reflection-question{font-size:11px;color:#b7c9d7}.dialog-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}.record{border-bottom:1px solid var(--line);padding:13px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}.record small{display:block;font-size:10px;color:var(--muted)}.record strong{font-size:23px;color:var(--mint)}#recordsList{margin:20px 0}#stage:fullscreen{width:100vw;height:100dvh;aspect-ratio:auto;border:0;border-radius:0}.stage:fullscreen .stage-overlay{padding-bottom:100px}.stage:fullscreen .stage-top:after{content:"Esc = verlaten · P = pauze";position:absolute;right:50px;top:7px;color:#d0dbe5;font-size:11px;background:#0c1c2bcc;border-radius:5px;padding:5px 8px}.error{color:#ffadb9!important}
+@media(min-width:1600px){.stage{aspect-ratio:16/9}}@media(max-width:1100px){.workspace{grid-template-columns:245px minmax(0,1fr);gap:24px}main{padding:24px}.topbar{padding:0 24px}.mode{padding:10px;gap:8px}.mode-icon{font-size:21px}.mode small{font-size:8px}.stat{padding:12px}.stat strong{font-size:26px}.play-heading h2{font-size:16px}.lesson-panel{gap:18px}.lesson-panel article{padding-left:18px}h1{font-size:42px}footer{padding:0 24px 24px}}
+@media(max-width:820px){.topbar{height:74px;padding:0 18px}.local-pill{display:none}.top-actions{gap:8px}.brand{font-size:22px}.brand-mark{width:36px;height:36px;font-size:26px}.brand small{font-size:7px;letter-spacing:1px}main{padding:20px 18px}.workspace{grid-template-columns:1fr;gap:23px}.play-panel{order:0}.control-panel{order:1;background:#122230;border:1px solid var(--line);padding:20px;border-radius:16px;display:grid;grid-template-columns:1fr 1fr;column-gap:22px}.control-panel>.eyebrow,.control-panel>h1,.control-panel>.intro{grid-column:1/-1}.control-panel>h1{font-size:32px;line-height:1;margin:8px 0}.control-panel h1 br{display:none}.control-panel .intro{max-width:none;margin:2px 0 5px}.control-panel .divider{grid-column:1/-1;margin:10px 0}.control-panel .settings,.control-panel #cameraStatus{grid-column:1/-1}.control-panel>.toggle{grid-column:1/-1}.step-card{margin:13px 0}.control-panel .two-fields{margin:0}.control-panel>.field{margin:0}.control-panel .settings{margin-top:10px}.stage{min-height:320px;aspect-ratio:16/10}.lesson-panel{grid-template-columns:1fr 1fr}.lesson-intro{grid-column:1/-1}.lesson-intro h2 br{display:none}.lesson-panel article:last-child{grid-column:1/-1}.lesson-panel article{padding-left:14px}.session-controls{gap:12px}.play-heading{margin-bottom:14px}.mode-tabs{gap:8px}footer{padding:0 18px 24px;flex-wrap:wrap;gap:4px 16px}footer p{flex-basis:100%;order:2}}
+@media(max-width:480px){.top-actions .icon-button span{display:none}.topbar{padding:0 14px}main{padding:17px 12px}.brand small{font-size:6px}.play-heading h2{font-size:14px}.round-label{font-size:7px;padding:5px 7px}.mode{flex-direction:column;align-items:flex-start;gap:3px;padding:10px;min-height:82px}.mode-icon{font-size:21px;line-height:1}.mode>span:nth-child(2){font-size:11px}.mode small{font-size:8px}.mode b{font-size:8px}.stage{min-height:360px;aspect-ratio:1}.stage-top{left:12px;right:12px;top:12px}.overlay-card{padding:18px 20px}.overlay-card h3{font-size:22px}.stage-bottom{font-size:9px;padding:9px 11px}.tracking-rate{font-size:8px}.hud{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:12px 14px}.stat strong{font-size:27px}.stat small{font-size:9px}.control-panel{grid-template-columns:1fr;padding:18px}.control-panel>*{grid-column:1!important}.control-panel .step-card{margin:11px 0}.control-panel>.field{margin-top:14px}.lesson-panel{grid-template-columns:1fr;gap:20px}.lesson-panel article:last-child{grid-column:auto}.lesson-panel p{font-size:12px}.body-check{max-width:92%;min-width:220px;font-size:9px}dialog{padding:21px}.stage-overlay{padding:60px 12px 85px}.session-controls .text-button{font-size:10px}#demoControls{max-width:none;width:100%;margin-left:0}footer{padding:0 12px 22px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="FITCADE start"><span class="brand-mark">F<span>↗</span></span><span>FITCADE<small>DE GYMLES, IN ARCADEMODUS</small></span></a>
+    <div class="top-actions"><span class="local-pill"><i></i> Op jouw apparaat</span><button class="icon-button" id="recordsBtn" aria-label="Bekijk highscores">↗ <span>Highscores</span></button><button class="icon-button" id="helpBtn" aria-label="Open speluitleg">? <span>Uitleg</span></button></div>
+  </header>
+  <main>
+    <div class="workspace">
+      <aside class="control-panel">
+        <div class="eyebrow">JOUW BEWEEGBREAK</div>
+        <h1>Ready, set,<br><em>move.</em></h1>
+        <p class="intro">Jij bent de controller. Maak ruimte, zet je camera klaar en kom in beweging.</p>
+        <div class="step-card"><span class="step-number">01</span><div><strong>Maak je speelruimte vrij</strong><p>Sta op afstand van je camera. Je hoofd, handen en voeten moeten in beeld passen.</p></div></div>
+        <div class="step-card"><span class="step-number">02</span><div><strong>Camera aan, lichaam check</strong><p>Sta even stil met je armen omlaag. We stemmen het spel af op jouw houding.</p></div></div>
+        <button id="cameraBtn" class="button primary wide"><span>◉</span> Camera inschakelen</button>
+        <button id="demoBtn" class="button secondary wide">Probeer de demo zonder camera <span>↗</span></button>
+        <p id="cameraStatus" class="status-note" role="status" aria-live="polite">Geen opname. Geen account. Geen kosten.</p>
+        <div class="divider"></div>
+        <label class="field">Spelersalias <span>alleen lokaal</span><input id="alias" maxlength="24" placeholder="Bijv. Team Groen" autocomplete="off"></label>
+        <div class="two-fields"><label class="field">Ronde<select id="duration"><option value="30">30 seconden</option><option value="45" selected>45 seconden</option><option value="60">60 seconden</option><option value="90">90 seconden</option></select></label><label class="field">Niveau<select id="difficulty"><option value="easy">Rustig</option><option value="normal" selected>Normaal</option><option value="hard">Uitdagend</option></select></label></div>
+        <label class="toggle"><input type="checkbox" id="circuit"><span></span><div>LO-circuit<small>Alle 3 games · 20 s herstel ertussen</small></div></label>
+        <details class="settings"><summary>Pas je spel aan <span>+</span></summary><div class="settings-body">
+          <label class="toggle"><input type="checkbox" id="lowImpact"><span></span><div>Bewegen zonder springen<small>Knie heffen bij Jump runner</small></div></label>
+          <label class="toggle"><input type="checkbox" id="assist"><span></span><div>Extra tijd en grotere targets<small>Aparte highscorecategorie</small></div></label>
+          <label class="toggle"><input type="checkbox" id="skeleton" checked><span></span><div>Toon bewegingslijnen</div></label>
+          <label class="toggle"><input type="checkbox" id="sound"><span></span><div>Spelgeluid</div></label>
+          <label class="toggle"><input type="checkbox" id="energy"><span></span><div>Energie als rekenvoorbeeld<small>Voor volwassenen (19+) · geen meting</small></div></label>
+          <div id="energyFields" hidden><label class="field">Massa in kg <span>wordt niet opgeslagen</span><input id="mass" type="number" min="20" max="250" step="1" placeholder="Vul zelf in"></label><label class="field">Aangenomen inspanning<select id="met"><option value="3">3 MET · vooral bovenlichaam</option><option value="4" selected>4 MET · matige inspanning</option><option value="5">5 MET · matig tot zwaar</option><option value="7.5">7,5 MET · zware inspanning</option></select></label><p class="status-note">Een theoretische schatting met volwassen referentiewaarden. De camera meet geen calorieën of hartslag. Voor leerlingen gebruiken we actieve tijd en ervaren inspanning.</p></div>
+        </div></details>
+      </aside>
+      <section class="play-panel" aria-label="Spelvenster">
+        <div class="play-heading"><div><span class="eyebrow">KIES JE CHALLENGE</span><h2>Van schermtijd naar beweegtijd.</h2></div><span class="round-label" id="roundLabel">ÉÉN SPELER</span></div>
+        <div class="mode-tabs" role="group" aria-label="Spelmodus"><button class="mode active" data-mode="hit" aria-pressed="true"><span class="mode-icon">✦</span><span>Hand rush<small>Raak de targets</small></span><b>01</b></button><button class="mode" data-mode="dodge" aria-pressed="false"><span class="mode-icon">◈</span><span>Head dodge<small>Ontwijk meteoren</small></span><b>02</b></button><button class="mode" data-mode="jump" aria-pressed="false"><span class="mode-icon">↟</span><span>Jump runner<small>Spring over obstakels</small></span><b>03</b></button></div>
+        <div class="stage" id="stage">
+          <video id="video" autoplay muted playsinline aria-hidden="true"></video><canvas id="gameCanvas" aria-label="Gespiegeld camerabeeld met spelobjecten"></canvas>
+          <div class="stage-top"><span class="live-badge" id="liveBadge"><i></i> SPEELVELD</span><button id="fullscreenBtn" class="stage-button" aria-label="Spelvenster op volledig scherm">⛶</button></div>
+          <div class="stage-overlay" id="overlay"><div class="overlay-card"><span class="overlay-symbol" id="overlaySymbol">◉</span><h3 id="overlayTitle">Stap het spel in.</h3><p id="overlayText">Zet je camera aan. Jij verschijnt hier, met de targets om je heen.</p><button class="button primary" id="startBtn" hidden>Start ronde</button><button class="button secondary" id="resumeBtn" hidden>Verder spelen</button></div></div>
+          <div class="body-check" id="bodyCheck"><span class="check-dot"></span><span id="bodyText">Je hele lichaam in beeld</span><div class="check-progress"><i id="bodyProgress"></i></div></div>
+          <div class="stage-bottom"><span id="gameInstruction">Raak de groene targets met je handen.</span><span class="tracking-rate" id="trackingRate"></span></div>
+        </div>
+        <div class="hud" aria-label="Spelstatistieken"><div class="stat"><span>SCORE</span><strong id="score">0000</strong><small id="bestScore">Record: 0</small></div><div class="stat"><span>NOG TE GAAN</span><strong id="time">00:45</strong><small id="roundStatus">Klaar voor de start</small></div><div class="stat"><span>COMBO</span><strong id="combo">0<span>×</span></strong><small>Opeenvolgend gelukt</small></div><div class="stat"><span>ACTIEVE TIJD</span><strong id="activeTime">0<span>s</span></strong><small id="energyReadout">Elke beweging telt</small></div></div>
+        <div class="session-controls"><button class="button secondary" id="pauseBtn" disabled>Ⅱ Pauze</button><button class="text-button" id="stopBtn" disabled>Stop sessie</button><button class="text-button" id="calibrateBtn" disabled>↻ Opnieuw afstemmen</button><span id="demoControls" hidden>Demo: muis = hand · ← → = hoofd · spatie = sprong</span></div>
+      </section>
+    </div>
+    <section class="lesson-panel"><div class="lesson-intro"><span class="eyebrow">MEER DAN EEN HIGHSCORE</span><h2>Een game.<br>Een hele gymles.</h2><p>Werk in tweetallen: één beweegt, één observeert. Wissel na het circuit.</p></div><article><span class="lesson-number">01 / VOORAF</span><h3>Warm op & kies je doel</h3><p>Beweeg 3 minuten rustig. Kies vervolgens een persoonlijk doel: controle, reactietijd of een hele ronde actief blijven.</p></article><article><span class="lesson-number">02 / TIJDENS</span><h3>Voel je inspanning</h3><p>Kun je nog een zin zeggen? Observeer ademhaling, beweegtempo en techniek. Een score meet spelvaardigheid, geen conditie.</p></article><article><span class="lesson-number">03 / ACHTERAF</span><h3>Vergelijk & verklaar</h3><p>Geef je inspanning een cijfer van 0 tot 10. Wat verandert na 20 seconden herstel? Verklaar waarom een hogere score niet altijd meer inspanning betekent.</p></article></section>
+  </main>
+  <footer><span>FITCADE <b>LO LAB</b></span><p>Herkenningssoftware wordt online geladen. Camerabeelden en resultaten blijven op je apparaat.</p><button id="clearBtn" class="text-button">Wis lokale gegevens</button></footer>
+  <dialog id="helpDialog"><div class="dialog-head"><span class="eyebrow">SPEELKLAAR IN 1 MINUUT</span><button class="icon-button" data-close aria-label="Sluiten">×</button></div><h2>Je lichaam is de controller.</h2><ol class="help-list"><li><strong>Zet je apparaat stevig neer.</strong> Gebruik de selfiecamera. Zet de camera ongeveer op heuphoogte en neem zoveel afstand dat ook opgeheven handen en voeten in beeld passen. Zet de telefoon bij voorkeur liggend neer.</li><li><strong>Maak ruimte en warm op.</strong> Gebruik een vrije, vlakke ondergrond. Eén speler in beeld. Stop bij pijn, duizeligheid of een onprettig gevoel.</li><li><strong>Sta stil met je armen omlaag.</strong> Na de lichaamscheck stemmen we targets en spronghoogte af. Bij verplaatsing van de camera gebruik je “Opnieuw afstemmen”.</li><li><strong>Klap boven je hoofd.</strong> Breng je handen eerst uit elkaar en daarna samen, beide boven je hoofd. Er wordt geen geluid opgenomen. Je kunt ook op “Start ronde” klikken.</li><li><strong>Kies je game.</strong> Raak groene targets met je handen, ontwijk oranje meteoren met je hoofd of spring wanneer een obstakel de stippellijn onder je bereikt. Bij knieheffen houd je een knie omhoog tijdens het passeren.</li><li><strong>Blijf in beeld.</strong> Het spel pauzeert bij verlies van tracking of een tweede persoon. Geen puntenverlies tijdens de pauze. Kom weer volledig in beeld en hervat.</li></ol><p class="info-box">Voor cameragebruik is internet nodig om de gratis herkenningssoftware te laden. Die draait daarna op je apparaat. Bewegingsherkenning is een schatting uit camerabeelden. Twee omhoogkomende voeten én heupen tellen als sprong; een diepe kniebuiging telt niet mee. Test vóór de les op de gebruikte apparaten. Demoresultaten tellen nooit mee voor highscores.</p><button class="button primary" data-close>Ik ben er klaar voor</button></dialog>
+  <dialog id="recordsDialog"><div class="dialog-head"><span class="eyebrow">PERSOONLIJKE PROGRESSIE</span><button class="icon-button" data-close aria-label="Sluiten">×</button></div><h2>Jouw highscores.</h2><p>Records gelden per spel, niveau, rondeduur en bewegingsvariant. Alleen volledige rondes uit een voltooide camerasessie tellen mee.</p><div id="recordsList"></div><button id="exportAllBtn" class="button secondary">Exporteer lesresultaten (CSV)</button><p id="storageStatus" class="status-note"></p></dialog>
+  <dialog id="resultsDialog"><div class="dialog-head"><span class="eyebrow" id="resultLabel">SESSIE VOLTOOID</span><button class="icon-button" data-close aria-label="Sluiten">×</button></div><h2>Goed bewogen.</h2><p id="resultSummary"></p><div id="resultRounds" class="result-rounds"></div><div class="reflection"><label class="field">Hoe zwaar voelde dit? <strong><output id="rpeValue">5</output>/10</strong><input id="rpe" type="range" min="0" max="10" value="5"><span class="range-labels"><span>0 · rust</span><span>5 · zwaar</span><span>10 · maximaal</span></span></label><label class="field">De praattest<select id="talk"><option value="">Kies wat je ervoer</option><option>Ik kon makkelijk praten</option><option>Een korte zin lukte</option><option>Praten ging moeilijk</option></select></label><p class="reflection-question">Wat hielp je om het vol te houden? Bespreek het verschil tussen spelvaardigheid en inspanning met je partner.</p></div><div class="dialog-actions"><button id="saveReflectionBtn" class="button primary">Bewaar reflectie</button><button id="exportBtn" class="button secondary">Download CSV</button></div><p id="resultSaveStatus" class="status-note" role="status"></p></dialog>
+  <script type="module">
+// FITCADE single-file edition. Own app code: MIT. MediaPipe runtime/model: Apache-2.0.
+// Version fixed at tasks-vision 1.1.0. Camera processing stays on this device.
+const POSE_WORKER_SOURCE="import {FilesetResolver, PoseLandmarker} from \"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/vision_bundle.mjs\";\nlet task;\nself.onmessage=async ({data})=>{\n  if(data.type==='init'){\n    try {\n      const files=await FilesetResolver.forVisionTasks(\"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/wasm\",true);\n      const options={baseOptions:{modelAssetPath:\"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task\",delegate:'CPU'},runningMode:'VIDEO',numPoses:2,minPoseDetectionConfidence:.6,minPosePresenceConfidence:.6,minTrackingConfidence:.6,outputSegmentationMasks:false};\n      // CPU in a worker is consistent across phones and avoids GPU context loss.\n      task=await PoseLandmarker.createFromOptions(files,options);\n      self.postMessage({type:'ready'});\n    }catch(e){self.postMessage({type:'error',message:e.message});}\n  }\n  if(data.type==='frame'){\n    const start=performance.now();\n    try {\n      if(!task)throw new Error('Model is niet klaar.');\n      const result=task.detectForVideo(data.bitmap,data.timestamp);\n      self.postMessage({type:'pose',landmarks:result.landmarks,timestamp:data.timestamp,inferenceMs:performance.now()-start});\n    }catch(e){self.postMessage({type:'error',message:e.message});}\n    finally {data.bitmap.close();}\n  }\n};\n";
+
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const mid = (a, b) => ({x: (a.x+b.x)/2, y: (a.y+b.y)/2});
+const distance = (a, b, aspect=1) => Math.hypot((a.x-b.x)*aspect, a.y-b.y);
+function segmentDistance(p, a, b, aspect=1) {
+  const dx=(b.x-a.x)*aspect, dy=b.y-a.y;
+  const px=(p.x-a.x)*aspect, py=p.y-a.y;
+  const t=clamp((px*dx+py*dy)/(dx*dx+dy*dy || 1),0,1);
+  return Math.hypot(px-t*dx,py-t*dy);
+}
+const MODES = {
+  dodge: {title:'Head dodge', nl:'Ontwijk met je hoofd', color:'#ffab80', instruction:'Beweeg je hoofd uit de baan van de oranje meteoren. Blijf naar de camera kijken.'},
+  hit: {title:'Hand rush', nl:'Raak met je handen', color:'#80f7d1', instruction:'Raak de groene targets met je handen. Elke reeks zonder misser verhoogt je combo.'},
+  jump: {title:'Jump runner', nl:'Spring over obstakels', color:'#bca3ff', instruction:'Spring als het obstakel de lijn onder je bereikt. Land rustig op twee voeten.'}
+};
+function fullBodyCheck(poses, aspect=1) {
+  if (!poses || poses.length===0) return {ok:false, message:'Ga in beeld staan. Zorg voor licht van voren.'};
+  if (poses.length!==1) return {ok:false, message:'Eén speler tegelijk. Laat anderen uit beeld stappen.'};
+  const p=poses[0];
+  const groups=[['hoofd',[0,7,8]],['schouders',[11,12]],['armen en handen',[13,14,15,16]],['heupen',[23,24]],['knieën',[25,26]],['voeten',[27,28,29,30,31,32]]];
+  for (const [label, indices] of groups) {
+    if(indices.some(i=>!p[i] || !Number.isFinite(p[i].x) || !Number.isFinite(p[i].y) || (p[i].visibility??0)<.55 || (p[i].presence??1)<.5))
+      return {ok:false,message:`Je ${label} zijn niet goed zichtbaar. Neem afstand en verbeter het licht.`};
+    if(indices.some(i=>p[i].x<.025 || p[i].x>.975 || p[i].y<.025 || p[i].y>.975))
+      return {ok:false,message:`Je ${label} vallen buiten de speelruimte. Stap verder van de camera.`};
+  }
+  const height=Math.max(p[31].y,p[32].y)-p[0].y;
+  if(height<.32) return {ok:false,message:'Kom iets dichterbij. Je lichaam is te klein in beeld.'};
+  if(p[0].y<.13) return {ok:false,message:'Maak ruimte boven je hoofd voor je handen. Stap iets verder weg.'};
+  if(distance(p[11],p[12],aspect)<.045) return {ok:false,message:'Kijk naar de camera en houd beide schouders zichtbaar.'};
+  return {ok:true,message:'Je hele lichaam is zichtbaar.',height};
+}
+class BodyGate {
+  constructor(){this.since=null;this.last={ok:false,message:'Camera staat uit.'};this.ready=false;}
+  update(poses, now, aspect=1) {
+    this.last=fullBodyCheck(poses,aspect);
+    if(!this.last.ok){this.since=null;this.ready=false;}
+    else {this.since??=now;this.ready=now-this.since>=1000;}
+    return {...this.last,ready:this.ready,progress:this.last.ok?clamp((now-this.since)/1000,0,1):0};
+  }
+  reset(){this.since=null;this.ready=false;}
+}
+const median = a => [...a].sort((x,y)=>x-y)[Math.floor(a.length/2)];
+class Calibration {
+  constructor(){this.samples=[];this.started=null;this.value=null;}
+  reset(){this.samples=[];this.started=null;this.value=null;}
+  add(p, now, aspect=1) {
+    if(!p || p[15].y<p[11].y || p[16].y<p[12].y){this.samples=[];this.started=null;return false;}
+    const hip=mid(p[23],p[24]);
+    if(this.samples.length && distance(hip,this.samples.at(-1).hip,aspect)>.025){this.samples=[];this.started=null;}
+    this.started??=now;
+    this.samples.push({hip,feet:mid(p[27],p[28]),leftFoot:{...p[27]},rightFoot:{...p[28]},head:{...p[0]},shoulder:mid(p[11],p[12]),width:distance(p[11],p[12],aspect),height:Math.max(p[31].y,p[32].y)-p[0].y,reach:Math.max(distance(p[11],p[13],aspect)+distance(p[13],p[15],aspect),distance(p[12],p[14],aspect)+distance(p[14],p[16],aspect))});
+    if(now-this.started<1500 || this.samples.length<15)return false;
+    const coordinate=name=>({x:median(this.samples.map(s=>s[name].x)),y:median(this.samples.map(s=>s[name].y))});
+    this.value={hip:coordinate('hip'),feet:coordinate('feet'),leftFoot:coordinate('leftFoot'),rightFoot:coordinate('rightFoot'),head:coordinate('head'),shoulder:coordinate('shoulder'),width:median(this.samples.map(s=>s.width)),height:median(this.samples.map(s=>s.height)),reach:median(this.samples.map(s=>s.reach)),aspect};
+    return true;
+  }
+}
+class ClapDetector {
+  constructor(){this.reset();}
+  reset(){this.armed=false;this.last=-Infinity;}
+  update(p, now, aspect=1){
+    if(!p){this.armed=false;return false;}
+    const above=p[15].y<p[0].y-.025 && p[16].y<p[0].y-.025;
+    const width=distance(p[11],p[12],aspect);
+    const apart=distance(p[15],p[16],aspect);
+    if(!above){this.armed=false;return false;}
+    if(apart>width*.65)this.armed=true;
+    if(this.armed && apart<width*.33 && now-this.last>1200){this.armed=false;this.last=now;return true;}
+    return false;
+  }
+}
+function angle(a,b,c,aspect){
+  const u={x:(a.x-b.x)*aspect,y:a.y-b.y},v={x:(c.x-b.x)*aspect,y:c.y-b.y};
+  return Math.acos(clamp((u.x*v.x+u.y*v.y)/(Math.hypot(u.x,u.y)*Math.hypot(v.x,v.y)||1),-1,1))*180/Math.PI;
+}
+class JumpDetector {
+  constructor(base,lowImpact=false){this.base=base;this.lowImpact=lowImpact;this.reset();}
+  reset(){this.airborne=false;this.upSince=null;this.lastEvent=-Infinity;}
+  update(p,now){
+    if(!p){this.upSince=null;return {airborne:false,event:false};}
+    const b=this.base,h=b.height,hip=mid(p[23],p[24]);
+    const lift=b.hip.y-hip.y;
+    const feet=Math.min(b.leftFoot.y-p[27].y,b.rightFoot.y-p[28].y);
+    const extended=angle(p[23],p[25],p[27],b.aspect)>140 && angle(p[24],p[26],p[28],b.aspect)>140;
+    const up=this.lowImpact ? Math.min(p[25].y,p[26].y)<hip.y+h*.09 : lift>h*.045 && feet>h*.055 && extended;
+    const down=this.lowImpact ? Math.min(p[25].y,p[26].y)>hip.y+h*.16 : feet<h*.02 && lift<h*.025;
+    let event=false;
+    if(up && !this.airborne){this.upSince??=now;if(now-this.upSince>=55 && now-this.lastEvent>350){this.airborne=true;this.lastEvent=now;event=true;}}
+    if(!up && !this.airborne)this.upSince=null;
+    if(down){this.airborne=false;this.upSince=null;}
+    return {airborne:this.airborne,event,lift:Math.max(0,lift/h)};
+  }
+}
+function energyExample(seconds,kg,met){
+  if(!Number.isFinite(kg)||kg<20||kg>250||![3,4,5,7.5].includes(met))return null;
+  return met*kg*seconds/3600;
+}
+function scoreKey(c,mode){return [mode,c.difficulty,c.duration,c.lowImpact?'step':'jump',c.assist?'assist':'normal'].join(':');}
+class Game {
+  constructor(mode,config,base,rng=Math.random){
+    this.mode=mode;this.config=config;this.base=base;this.rng=rng;this.time=0;this.score=0;this.combo=0;this.bestCombo=0;this.hits=0;this.misses=0;this.moves=0;this.objects=[];this.effects=[];this.spawnIn=.8;this.lastHands=null;this.jump=new JumpDetector(base,config.lowImpact);this.airborne=false;this.lastPose=null;
+    this.level={easy:.8,normal:1,hard:1.3}[config.difficulty]||1;
+    this.lastAction='';
+  }
+  suspend(){this.lastHands=null;this.jump.reset();this.airborne=false;}
+  hit(obj){
+    obj.done=true;this.hits++;this.combo++;this.bestCombo=Math.max(this.combo,this.bestCombo);this.score+=100+Math.min(100,Math.floor(this.combo/5)*20);
+    this.effects.push({x:obj.x,y:obj.y,text:`+${100+Math.min(100,Math.floor(this.combo/5)*20)}`,life:.7,color:MODES[this.mode].color});this.lastAction='hit';
+  }
+  miss(obj){obj.done=true;this.misses++;this.combo=0;this.effects.push({x:obj.x,y:obj.y,text:this.mode==='dodge'?'Geraakt':'Gemist',life:.65,color:'#ff7d91'});this.lastAction='miss';}
+  spawn(){
+    const b=this.base,a=b.aspect,r=.038*(this.config.assist?1.35:1);
+    if(this.mode==='hit'){
+      const side=this.rng()>.5?1:-1;
+      const theta=-1.5+this.rng()*2.9;
+      const reach=b.reach*(.5+this.rng()*.32);
+      const x=clamp(b.shoulder.x+side*Math.cos(theta)*reach/a,.08,.92);
+      const y=clamp(b.shoulder.y+Math.sin(theta)*reach,Math.max(.055,b.head.y-.06),b.hip.y+.04);
+      this.objects.push({x,y,r,life:(this.config.assist?3.4:2.5)/this.level,total:(this.config.assist?3.4:2.5)/this.level,done:false});
+    } else if(this.mode==='dodge'){
+      // Lock onto the recent head location, then travel without retargeting.
+      const head=this.lastPose?.[0]||b.head;
+      const fromLeft=this.rng()>.5;
+      const x=fromLeft?-.07:1.07;
+      const travel=(this.config.assist?2.1:1.6)/this.level;
+      this.objects.push({x,y:clamp(head.y+(this.rng()-.5)*b.width*.3,.08,.6),r:.042,dx:(head.x-x)/travel,life:travel+.45,age:0,warning:.65,done:false});
+    } else {
+      this.objects.push({x:1.08,y:Math.min(.93,b.feet.y),r:.045,dx:-.27*this.level/(this.config.assist?1.2:1),done:false,checked:false});
+    }
+  }
+  tick(dt,p){
+    this.lastAction='';
+    if(!p || dt<=0)return;
+    dt=Math.min(dt,.1);this.time+=dt;this.lastPose=p;
+    const jump=this.jump.update(p,this.time*1000);this.airborne=jump.airborne;if(jump.event)this.moves++;
+    this.spawnIn-=dt;
+    if(this.spawnIn<=0){this.spawn();this.spawnIn=(this.mode==='hit'?1.05:this.mode==='dodge'?1.65:2.2)/this.level;}
+    const hands=[p[15],p[16]];
+    for(const obj of this.objects){
+      if(obj.done)continue;
+      if(this.mode==='hit'){
+        obj.life-=dt;
+        const touched=hands.some((hand,i)=>{
+          const prev=this.lastHands?.[i]||hand;
+          // Very large gaps are tracking changes, not hand sweeps.
+          return distance(prev,hand,this.base.aspect)<this.base.height*.5 && segmentDistance(obj,prev,hand,this.base.aspect)<obj.r+.02;
+        });
+        if(touched){this.hit(obj);this.moves++;}else if(obj.life<=0)this.miss(obj);
+      } else if(this.mode==='dodge'){
+        obj.age+=dt;
+        if(obj.age<obj.warning)continue;
+        obj.x+=obj.dx*dt;obj.life-=dt;
+        const headRadius=clamp(this.base.width*.3,.028,.065);
+        if(distance(obj,p[0],this.base.aspect)<obj.r+headRadius)this.miss(obj);
+        else if(obj.life<=0||obj.x<-.15||obj.x>1.15){this.hit(obj);this.moves++;}
+      } else {
+        const before=obj.x;obj.x+=obj.dx*dt;
+        const playerX=this.base.hip.x;
+        if(!obj.checked && before>=playerX && obj.x<=playerX){obj.checked=true;if(this.airborne)this.hit(obj);else this.miss(obj);}
+      }
+    }
+    this.objects=this.objects.filter(o=>!o.done);
+    this.effects=this.effects.map(e=>({...e,life:e.life-dt})).filter(e=>e.life>0);
+    this.lastHands=hands.map(p=>({...p}));
+  }
+  result(){return {mode:this.mode,score:this.score,hits:this.hits,misses:this.misses,bestCombo:this.bestCombo,moves:this.moves,seconds:this.time,accuracy:this.hits+this.misses?Math.round(this.hits/(this.hits+this.misses)*100):null};}
+}
+function makeDemoPose(){
+  const p=Array.from({length:33},()=>({x:.5,y:.45,z:0,visibility:1,presence:1}));
+  const set=(i,x,y)=>Object.assign(p[i],{x,y});
+  set(0,.5,.22);set(7,.46,.22);set(8,.54,.22);
+  set(11,.42,.35);set(12,.58,.35);set(13,.37,.47);set(14,.63,.47);set(15,.36,.59);set(16,.64,.59);
+  set(23,.45,.57);set(24,.55,.57);set(25,.44,.73);set(26,.56,.73);
+  set(27,.44,.88);set(28,.56,.88);set(29,.43,.89);set(30,.57,.89);set(31,.41,.9);set(32,.59,.9);
+  return p;
+}
+
+class PoseCamera {
+  constructor(video,onPose,onStatus){this.video=video;this.onPose=onPose;this.onStatus=onStatus;this.worker=null;this.task=null;this.stream=null;this.busy=false;this.active=false;this.lastVideo=-1;this.lastSent=-Infinity;this.generation=0;this.inferenceMs=0;this.fallback=false;this.timer=null;}
+  async start(){
+    this.stop();const generation=this.generation;
+    if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia)throw new Error('Camera heeft HTTPS of localhost nodig. Open de GitHub Pages-versie.');
+    this.onStatus('Camera openen…');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'user',width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}}});
+    if(generation!==this.generation){stream.getTracks().forEach(t=>t.stop());return;}
+    this.stream=stream;this.video.srcObject=stream;
+    try{
+      await this.video.play();
+      this.onStatus('Bewegingsherkenning laden…');
+      try {await this.startWorker(generation);}catch(e){
+        if(generation!==this.generation)return;
+        this.worker?.terminate();this.worker=null;if(this.workerURL){URL.revokeObjectURL(this.workerURL);this.workerURL=null;}this.fallback=true;
+        this.onStatus('Compatibiliteitsmodus laden…');
+        const {FilesetResolver,PoseLandmarker}=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/vision_bundle.mjs");
+        const files=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0/wasm",true);
+        const task=await PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:'CPU'},runningMode:'VIDEO',numPoses:2,minPoseDetectionConfidence:.6,minPosePresenceConfidence:.6,minTrackingConfidence:.6,outputSegmentationMasks:false});
+        if(generation!==this.generation){task.close();return;}this.task=task;
+      }
+      if(generation!==this.generation)return;
+      this.active=true;this.lastVideo=-1;this.lastSent=-Infinity;this.onStatus(this.fallback?'Camera aan · compatibiliteitsmodus':'Camera aan · lokaal verwerkt');
+    }catch(e){if(generation===this.generation)this.stop();throw e;}
+  }
+  startWorker(generation){
+    return new Promise((resolve,reject)=>{
+      const worker=new Worker(this.workerURL=URL.createObjectURL(new Blob([POSE_WORKER_SOURCE],{type:'text/javascript'})),{type:'module'});this.worker=worker;
+      const timeout=setTimeout(()=>reject(new Error('Model laden duurde te lang.')),25000);
+      worker.onmessage=({data})=>{
+        if(generation!==this.generation)return;
+        if(data.type==='ready'){clearTimeout(timeout);URL.revokeObjectURL(this.workerURL);this.workerURL=null;resolve();}
+        if(data.type==='pose'){this.busy=false;this.inferenceMs=data.inferenceMs;this.onPose(data.landmarks,data.timestamp);}
+        if(data.type==='error'){this.busy=false;clearTimeout(timeout);if(!this.active)reject(new Error(data.message));else{this.onStatus('Herkenningsfout. Herstart de camera.');this.onPose([],performance.now());this.stop();}}
+      };
+      worker.onerror=e=>{clearTimeout(timeout);if(!this.active)reject(new Error(e.message));else{this.onStatus('Herkenningsfout. Herstart de camera.');this.onPose([],performance.now());this.stop();}};
+      worker.postMessage({type:'init'});
+    });
+  }
+  async frame(now){
+    const v=this.video;
+    const interval=Math.max(this.fallback?100:50,this.inferenceMs*1.15);
+    if(!this.active||this.busy||v.readyState<2||v.currentTime===this.lastVideo||now-this.lastSent<interval)return;
+    this.busy=true;this.lastVideo=v.currentTime;this.lastSent=now;
+    const generation=this.generation;
+    try{
+      if(this.worker){
+        const scale=Math.min(1,640/v.videoWidth);
+        const bitmap=await createImageBitmap(v,{resizeWidth:Math.round(v.videoWidth*scale),resizeHeight:Math.round(v.videoHeight*scale)});
+        if(generation!==this.generation){bitmap.close();return;}
+        this.worker.postMessage({type:'frame',bitmap,timestamp:now},[bitmap]);
+      }else if(this.task){const start=performance.now();const r=this.task.detectForVideo(v,now);this.inferenceMs=performance.now()-start;this.busy=false;this.onPose(r.landmarks,now);}
+    }catch(e){this.busy=false;this.onStatus('Cameraonderbreking. Herstart de camera.');this.onPose([],now);this.stop();}
+  }
+  stop(){
+    this.generation++;this.active=false;this.busy=false;this.fallback=false;
+    this.worker?.terminate();this.worker=null;if(this.workerURL){URL.revokeObjectURL(this.workerURL);this.workerURL=null;}this.task?.close();this.task=null;
+    this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;
+    this.video.srcObject=null;
+  }
+}
+
+const CONNECTIONS=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+class Renderer {
+  constructor(canvas,video){this.canvas=canvas;this.video=video;this.ctx=canvas.getContext('2d');this.bounds={x:0,y:0,w:1,h:1};}
+  point(p){const b=this.bounds;return {x:b.x+p.x*b.w,y:b.y+p.y*b.h};}
+  pointer(x,y){const rect=this.canvas.getBoundingClientRect(),b=this.bounds;return {x:clamp((x-rect.left-b.x)/b.w,.035,.965),y:clamp((y-rect.top-b.y)/b.h,.035,.965)};}
+  render({camera,demo,pose,game,base,skeleton,mode,now}){
+    const canvas=this.canvas,ctx=this.ctx,rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+    const W=rect.width,H=rect.height;
+    if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d1925';ctx.fillRect(0,0,W,H);
+    const a=camera&&this.video.videoWidth?this.video.videoWidth/this.video.videoHeight:16/9;
+    const w=Math.min(W,H*a),h=w/a;this.bounds={x:(W-w)/2,y:(H-h)/2,w,h};const b=this.bounds;
+    if(camera&&this.video.readyState>=2){ctx.save();ctx.translate(b.x+b.w,b.y);ctx.scale(-1,1);ctx.drawImage(this.video,0,0,b.w,b.h);ctx.restore();ctx.fillStyle='#08142126';ctx.fillRect(b.x,b.y,b.w,b.h);}
+    else {
+      const grad=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,W*.7);grad.addColorStop(0,'#213746');grad.addColorStop(1,'#101b29');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+      ctx.strokeStyle='#80f7d10b';ctx.lineWidth=1;for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+      if(!demo)this.silhouette(W,H);
+    }
+    if(pose&&(skeleton||demo))this.drawPose(pose,demo);
+    if(base&&game?.mode==='jump'){
+      const floor=this.point({x:0,y:base.feet.y+.022});ctx.strokeStyle='#bca3ff70';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x,floor.y);ctx.lineTo(b.x+b.w,floor.y);ctx.stroke();
+      const player=this.point({x:base.hip.x,y:base.feet.y});ctx.strokeStyle='#bca3ff';ctx.setLineDash([4,6]);ctx.beginPath();ctx.moveTo(player.x,player.y-h*.16);ctx.lineTo(player.x,player.y+h*.04);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#bca3ff';ctx.font='600 10px system-ui';ctx.textAlign='center';ctx.fillText(game.airborne?'OMHOOG ✓':'SPRINGLIJN',player.x,player.y+h*.065);
+    }
+    if(game){
+      for(const o of game.objects)this.object(o,game,now);
+      for(const e of game.effects){const pos=this.point(e);ctx.globalAlpha=Math.min(1,e.life*2);ctx.fillStyle=e.color;ctx.font='800 19px system-ui';ctx.textAlign='center';ctx.fillText(e.text,pos.x,pos.y-(.7-e.life)*35);ctx.globalAlpha=1;}
+    }
+    if(pose){
+      const indices=mode==='hit'?[15,16]:mode==='dodge'?[0]:[27,28];
+      for(const i of indices){const p=this.point(pose[i]);ctx.strokeStyle=MODES[mode].color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,(i===0?.033:.023)*h,0,Math.PI*2);ctx.stroke();}
+    }
+  }
+  silhouette(W,H){
+    const c=this.ctx,x=W*.5,y=H*.49,scale=Math.min(H/340,W/400);
+    c.save();c.translate(x,y);c.scale(scale,scale);c.strokeStyle='#60859725';c.lineWidth=18;c.lineCap='round';
+    c.beginPath();c.arc(0,-105,23,0,Math.PI*2);c.stroke();
+    for(const pts of [[0,-64,0,38],[-44,-44,0,-64,44,-44],[-44,-44,-62,24],[44,-44,62,24],[0,38,-27,118],[0,38,27,118]]){c.beginPath();for(let i=0;i<pts.length;i+=2)i===0?c.moveTo(pts[i],pts[i+1]):c.lineTo(pts[i],pts[i+1]);c.stroke();}
+    c.strokeStyle='#80f7d135';c.lineWidth=2;c.setLineDash([6,9]);c.strokeRect(-110,-153,220,302);c.restore();
+  }
+  drawPose(p,demo){
+    const c=this.ctx;c.strokeStyle=demo?'#80f7d180':'#80f7d160';c.lineWidth=demo?5:2;c.lineCap='round';
+    for(const [a,b] of CONNECTIONS){if(p[a].visibility<.5||p[b].visibility<.5)continue;const A=this.point(p[a]),B=this.point(p[b]);c.beginPath();c.moveTo(A.x,A.y);c.lineTo(B.x,B.y);c.stroke();}
+    if(demo){const head=this.point(p[0]);c.fillStyle='#223f4e';c.strokeStyle='#80f7d1';c.lineWidth=3;c.beginPath();c.arc(head.x,head.y,this.bounds.h*.047,0,Math.PI*2);c.fill();c.stroke();c.fillStyle='#80f7d1';c.beginPath();c.arc(head.x-5,head.y-1,2,0,Math.PI*2);c.arc(head.x+5,head.y-1,2,0,Math.PI*2);c.fill();}
+    c.fillStyle='#b3ffe5';for(const i of [11,12,13,14,15,16,23,24,25,26,27,28]){if(p[i].visibility<.5)continue;const v=this.point(p[i]);c.beginPath();c.arc(v.x,v.y,demo?4:2.5,0,Math.PI*2);c.fill();}
+  }
+  object(o,g,now){
+    const c=this.ctx,b=this.bounds,p=this.point(o),r=o.r*b.h;
+    if(g.mode==='hit'){
+      c.fillStyle='#80f7d12b';c.strokeStyle='#80f7d1';c.lineWidth=3;c.beginPath();c.arc(p.x,p.y,r,0,Math.PI*2);c.fill();c.stroke();
+      c.strokeStyle='#ffffffa0';c.lineWidth=2;c.beginPath();c.arc(p.x,p.y,r+6,-Math.PI/2,-Math.PI/2+Math.PI*2*clamp(o.life/o.total,0,1));c.stroke();
+      c.fillStyle='#dcfff4';c.font=`700 ${Math.max(15,r)}px system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillText('✦',p.x,p.y);c.textBaseline='alphabetic';
+    } else if(g.mode==='dodge'){
+      if(o.age<o.warning){const y=p.y;c.strokeStyle='#ffab8080';c.setLineDash([4,10]);c.lineWidth=2;c.beginPath();c.moveTo(b.x,y);c.lineTo(b.x+b.w,y);c.stroke();c.setLineDash([]);c.fillStyle='#ffab80';c.font='800 12px system-ui';c.textAlign=o.dx>0?'left':'right';c.fillText(o.dx>0?'→ METEOOR':'METEOOR ←',o.dx>0?b.x+12:b.x+b.w-12,y-10);return;}
+      const trail=o.dx>0?-1:1;c.strokeStyle='#ffab8040';c.lineWidth=r;c.lineCap='round';c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x+trail*r*2.7,p.y);c.stroke();
+      c.fillStyle='#ffab80';c.shadowColor='#ffab80';c.shadowBlur=14;c.beginPath();c.arc(p.x,p.y,r,0,Math.PI*2);c.fill();c.shadowBlur=0;c.fillStyle='#b35c4f';c.beginPath();c.arc(p.x-r*.25,p.y-r*.2,r*.23,0,Math.PI*2);c.arc(p.x+r*.3,p.y+r*.2,r*.18,0,Math.PI*2);c.fill();
+    } else {
+      c.fillStyle='#bca3ff';c.shadowColor='#bca3ff80';c.shadowBlur=10;c.fillRect(p.x-r*.6,p.y-r*1.4,r*1.2,r*1.4);c.fillRect(p.x-r,p.y-r,r*.4,r*.3);c.fillRect(p.x+r*.6,p.y-r*1.3,r*.4,r*.3);c.shadowBlur=0;c.fillStyle='#342958';c.fillRect(p.x-r*.22,p.y-r*1.16,r*.44,r*.23);c.strokeStyle='#e6dcff';c.lineWidth=2;c.strokeRect(p.x-r*.6,p.y-r*1.4,r*1.2,r*1.4);
+    }
+  }
+}
+
+const KEY='fitcade.v1';
+class LocalStore {
+  constructor(){this.available=true;this.data={sessions:[],settings:{}};try {const parsed=JSON.parse(localStorage.getItem(KEY)||'null');if(parsed&&Array.isArray(parsed.sessions)&&parsed.settings&&typeof parsed.settings==='object')this.data=parsed;}catch{this.available=false;}}
+  save(){try{localStorage.setItem(KEY,JSON.stringify(this.data));return true;}catch{this.available=false;return false;}}
+  settings(values){this.data.settings=values;return this.save();}
+  add(session){this.data.sessions.unshift(session);this.data.sessions=this.data.sessions.slice(0,100);return this.save();}
+  clear(){this.data={sessions:[],settings:{}};return this.save();}
+  best(key){return Math.max(0,...this.data.sessions.filter(s=>!s.demo&&s.completed).flatMap(s=>s.rounds.filter(r=>r.key===key&&r.completed).map(r=>r.score)));}
+}
+function csvText(sessions){
+  const header=['datum','alias','demo','volledig','modus','moeilijkheid','ronde_s','variant','hulp','score','raak','gemist','beste_combo','actieve_s','inspanningsscore_0_10','praattest','energie_rekenvoorbeeld_kcal'];
+  // Prevent aliases from being interpreted as spreadsheet formulas.
+  const esc=v=>{let s=String(v??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
+  const rows=sessions.flatMap(s=>s.rounds.map(r=>[s.date,s.alias,s.demo,s.completed,r.mode,s.config.difficulty,s.config.duration,s.config.lowImpact?'knieheffen':'springen',s.config.assist,r.score,r.hits,r.misses,r.bestCombo,Math.round(r.seconds),s.rpe,s.talk,s.energy??'']));
+  return '\uFEFF'+[header,...rows].map(row=>row.map(esc).join(';')).join('\r\n');
+}
+function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+const $=id=>document.getElementById(id);
+const store=new LocalStore(),gate=new BodyGate(),calibration=new Calibration(),clap=new ClapDetector();
+const renderer=new Renderer($('gameCanvas'),$('video'));
+let mode='hit',phase='off',demo=false,pose=null,lastPoseAt=-Infinity,body={ok:false,ready:false,progress:0,message:'Je hele lichaam in beeld'},game=null,session=null,latestSession=null;
+let countdown=3,rest=20,roundIndex=0,lastFrame=performance.now(),uiAt=0,currentAspect=16/9,keys=new Set(),mouse=null,jumpUntil=0,clapUntil=0,headOffset=0,sourceGeneration=0,wakeLock=null,audioContext=null;
+let config={};
+const camera=new PoseCamera($('video'),receivePose,status=>{$('cameraStatus').textContent=status;});
+function getConfig(){return {alias:$('alias').value.trim()||'Speler',duration:Number($('duration').value),difficulty:$('difficulty').value,circuit:$('circuit').checked,lowImpact:$('lowImpact').checked,assist:$('assist').checked};}
+function remember(){const c=getConfig();store.settings({duration:c.duration,difficulty:c.difficulty,lowImpact:c.lowImpact,assist:c.assist,circuit:c.circuit,skeleton:$('skeleton').checked,sound:$('sound').checked});}
+for(const id of ['duration','difficulty','lowImpact','assist','circuit','skeleton','sound']){
+  if(store.data.settings[id]!==undefined){if($(id).type==='checkbox')$(id).checked=Boolean(store.data.settings[id]);else $(id).value=String(store.data.settings[id]);}
+  $(id).addEventListener('change',()=>{remember();updateUI();});
+}
+function resetTracking(){pose=null;lastPoseAt=-Infinity;gate.reset();calibration.reset();clap.reset();body={ok:false,ready:false,progress:0,message:'Ga volledig in beeld staan.'};}
+function receivePose(poses,now){
+  const mirrored=poses.map(person=>person.map(p=>({...p,x:1-p.x})));
+  lastPoseAt=now;pose=mirrored.length===1?mirrored[0]:null;
+  body=gate.update(mirrored,now,currentAspect);
+  if(!body.ok){clap.update(null,now);if(phase==='calibrating'){calibration.reset();}if(['playing','countdown'].includes(phase))trackingPause();return;}
+  if(phase==='calibrating' && body.ready){
+    if(calibration.add(pose,now,currentAspect)){phase='ready';clap.reset();beep(620,.12);}
+  }
+  if(phase==='ready'&&body.ready&&calibration.value&&clap.update(pose,now,currentAspect))begin();
+}
+function busySession(){return ['countdown','playing','rest','paused','tracking'].includes(phase);}
+function setMode(next){if(busySession())return;mode=next;updateUI();}
+for(const btn of document.querySelectorAll('.mode'))btn.addEventListener('click',()=>setMode(btn.dataset.mode));
+async function startCamera(){
+  if(busySession())finish(false);
+  const generation=++sourceGeneration;demo=false;resetTracking();phase='loading';game=null;mouse=null;
+  $('cameraBtn').disabled=true;$('cameraStatus').classList.remove('error');updateUI();
+  try{
+    await camera.start();if(generation!==sourceGeneration)return;
+    currentAspect=$('video').videoWidth/$('video').videoHeight||16/9;phase='calibrating';
+  }catch(e){
+    if(generation!==sourceGeneration)return;phase='off';
+    const messages={NotAllowedError:'Cameratoegang niet toegestaan. Geef toestemming in de browser en probeer opnieuw.',NotFoundError:'Geen camera gevonden. Probeer de demo of sluit een webcam aan.',NotReadableError:'De camera is bezet. Sluit andere apps die je camera gebruiken.'};
+    $('cameraStatus').textContent=messages[e.name]||e.message;$('cameraStatus').classList.add('error');
+  }finally{if(generation===sourceGeneration){$('cameraBtn').disabled=false;updateUI();}}
+}
+$('cameraBtn').addEventListener('click',()=>{unlockAudio();if(camera.active&&!busySession()){sourceGeneration++;camera.stop();phase='off';game=null;resetTracking();$('cameraStatus').textContent='Camera uit. Je kunt opnieuw starten.';updateUI();}else startCamera();});
+$('demoBtn').addEventListener('click',()=>{
+  unlockAudio();sourceGeneration++;camera.stop();if(busySession())finish(false);
+  demo=true;resetTracking();currentAspect=16/9;game=null;phase='calibrating';mouse=null;headOffset=0;
+  $('cameraBtn').disabled=false;$('cameraStatus').classList.remove('error');$('cameraStatus').textContent='Demo met getekende speler. Demo telt niet mee voor highscores.';updateUI();
+});
+function unlockAudio(){if($('sound').checked){audioContext??=new(window.AudioContext||window.webkitAudioContext)();audioContext.resume().catch(()=>{});}}
+function beep(frequency=500,duration=.06){if(!$('sound').checked||!audioContext||audioContext.state!=='running')return;const oscillator=audioContext.createOscillator(),gain=audioContext.createGain();oscillator.type='sine';oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.045,audioContext.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);oscillator.connect(gain).connect(audioContext.destination);oscillator.start();oscillator.stop(audioContext.currentTime+duration);}
+async function requestWakeLock(){try{if(navigator.wakeLock&&document.visibilityState==='visible')wakeLock=await navigator.wakeLock.request('screen');}catch{}}
+function releaseWakeLock(){wakeLock?.release().catch(()=>{});wakeLock=null;}
+function begin(){
+  if(phase!=='ready'||!body.ready||!calibration.value)return;
+  unlockAudio();config=getConfig();session={id:crypto.randomUUID(),date:new Date().toISOString(),alias:config.alias,demo,completed:false,config:{...config},rounds:[],rpe:null,talk:'',energy:null};roundIndex=0;
+  session.order=config.circuit?['hit','dodge','jump']:[mode];requestWakeLock();newRound();
+}
+function newRound(){mode=session.order[roundIndex];game=new Game(mode,config,calibration.value);countdown=3;phase='countdown';clap.reset();updateUI();}
+function resume(){if(!['paused','tracking'].includes(phase)||!body.ready)return;unlockAudio();requestWakeLock();if(session?.resumeRest){session.resumeRest=false;phase='rest';}else{countdown=3;game?.suspend();phase='countdown';}updateUI();}
+function trackingPause(){if(!['playing','countdown'].includes(phase))return;phase='tracking';game?.suspend();clap.reset();updateUI();}
+function pause(){if(['playing','countdown','rest'].includes(phase)){session.resumeRest=phase==='rest';phase='paused';game?.suspend();releaseWakeLock();updateUI();}}
+$('startBtn').addEventListener('click',begin);
+$('resumeBtn').addEventListener('click',resume);
+$('pauseBtn').addEventListener('click',()=>{if(phase==='paused')resume();else pause();updateUI();});
+$('stopBtn').addEventListener('click',()=>finish(false));
+$('calibrateBtn').addEventListener('click',()=>{if(busySession())return;resetTracking();game=null;phase=demo||camera.active?'calibrating':'off';updateUI();});
+function addRound(completed){if(!game)return;const result={...game.result(),completed,key:scoreKey(config,mode)};session.rounds.push(result);}
+function roundDone(){addRound(true);beep(750,.15);if(roundIndex<session.order.length-1){phase='rest';rest=20;game=null;updateUI();}else finish(true,false);}
+function totalSeconds(){return (session?.rounds.reduce((sum,r)=>sum+r.seconds,0)||0)+(game&&['playing','countdown','paused','tracking'].includes(phase)?game.time:0);}
+function energy(seconds){return $('energy').checked?energyExample(seconds,Number($('mass').value),Number($('met').value)):null;}
+function finish(completed,includeCurrent=true){
+  if(!session||!busySession())return;
+  if(includeCurrent&&game)addRound(false);
+  session.completed=completed;session.energy=energy(session.rounds.reduce((n,r)=>n+r.seconds,0));
+  delete session.resumeRest;delete session.order;
+  latestSession=session;store.add(latestSession);phase='finished';game=null;releaseWakeLock();
+  showResults();updateUI();
+}
+function showResults(){
+  const s=latestSession;if(!s)return;
+  $('resultLabel').textContent=s.demo?'DEMO · GEEN HIGHSCORE':s.completed?'SESSIE VOLTOOID':'SESSIE GESTOPT · GEEN HIGHSCORE';
+  const seconds=Math.round(s.rounds.reduce((n,r)=>n+r.seconds,0)),points=s.rounds.reduce((n,r)=>n+r.score,0);
+  $('resultSummary').textContent=`${s.alias} · ${seconds} seconden actief · ${points} punten.${s.energy!==null?` Energie-rekenvoorbeeld: circa ${s.energy.toFixed(1)} kcal (19+, geen meting).`:''}`;
+  $('resultRounds').replaceChildren(...s.rounds.map(r=>{
+    const row=document.createElement('div');row.className='result-row';const text=document.createElement('div');text.textContent=MODES[r.mode].title;const small=document.createElement('small');small.textContent=`${r.hits} gelukt · ${r.misses} gemist · ${r.accuracy??'–'}% · combo ${r.bestCombo}${r.completed?'':' · onvolledige ronde'}`;text.append(small);const score=document.createElement('strong');score.textContent=r.score;row.append(text,score);return row;
+  }));
+  $('rpe').value=s.rpe??5;$('rpeValue').textContent=$('rpe').value;$('talk').value=s.talk||'';
+  $('resultSaveStatus').textContent=store.available?'Spelresultaat lokaal bewaard. Voeg je reflectie toe.':'Opslag is niet beschikbaar. Download het CSV-resultaat om het te bewaren.';
+  if(!$('resultsDialog').open)$('resultsDialog').showModal();
+}
+$('rpe').addEventListener('input',()=>{$('rpeValue').textContent=$('rpe').value;});
+function saveReflection(){if(!latestSession)return;latestSession.rpe=Number($('rpe').value);latestSession.talk=$('talk').value;store.save();$('resultSaveStatus').textContent=store.available?'Reflectie bewaard. Bespreek je inspanning en herstel.':'Download je CSV om je reflectie te bewaren.';}
+$('saveReflectionBtn').addEventListener('click',saveReflection);
+$('exportBtn').addEventListener('click',()=>{saveReflection();if(latestSession)download('fitcade-lesresultaat.csv',csvText([latestSession]),'text/csv;charset=utf-8');});
+$('exportAllBtn').addEventListener('click',()=>download('fitcade-lesresultaten.csv',csvText(store.data.sessions),'text/csv;charset=utf-8'));
+function records(){
+  const records=new Map();
+  for(const s of store.data.sessions.filter(s=>!s.demo&&s.completed))for(const r of s.rounds.filter(r=>r.completed))if(!records.has(r.key)||records.get(r.key).r.score<r.score)records.set(r.key,{s,r});
+  const rows=[...records.values()].sort((a,b)=>b.r.score-a.r.score).map(({s,r})=>{
+    const row=document.createElement('div');row.className='record';const text=document.createElement('div');text.textContent=`${MODES[r.mode].title} · ${s.alias}`;const sub=document.createElement('small');sub.textContent=`${{easy:'Rustig',normal:'Normaal',hard:'Uitdagend'}[s.config.difficulty]} · ${s.config.duration} s · ${s.config.lowImpact?'knieheffen':'standaard'}${s.config.assist?' · extra hulp':''}`;text.append(sub);const points=document.createElement('strong');points.textContent=r.score;row.append(text,points);return row;
+  });
+  if(!rows.length){const p=document.createElement('p');p.textContent='Nog geen records. Speel een volledige sessie met de camera.';rows.push(p);}
+  $('recordsList').replaceChildren(...rows);$('storageStatus').textContent=store.available?'Tot 100 sessies in deze browser. Wissel van apparaat en je records verhuizen niet mee.':'Lokale opslag is niet beschikbaar. Exporteer je resultaten naar CSV.';$('recordsDialog').showModal();
+}
+$('recordsBtn').addEventListener('click',records);
+$('helpBtn').addEventListener('click',()=>{pause();$('helpDialog').showModal();});
+for(const btn of document.querySelectorAll('[data-close]'))btn.addEventListener('click',()=>btn.closest('dialog').close());
+for(const dialog of document.querySelectorAll('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
+$('clearBtn').addEventListener('click',()=>{if(confirm('Alle lokale sessies, highscores en instellingen wissen?')){store.clear();latestSession=null;records();updateUI();}});
+$('fullscreenBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('stage').requestFullscreen();}catch{$('cameraStatus').textContent='Volledig scherm is hier niet beschikbaar. Gebruik het spelvenster.';}});
+$('energy').addEventListener('change',()=>{$('energyFields').hidden=!$('energy').checked;updateUI();});
+$('mass').addEventListener('input',updateUI);$('met').addEventListener('change',updateUI);
+$('recordsBtn').addEventListener('click',pause);
+function overlay(symbol,title,text,start=false,resumeVisible=false){$('overlay').hidden=false;$('overlaySymbol').textContent=symbol;$('overlayTitle').textContent=title;$('overlayText').textContent=text;$('startBtn').hidden=!start;$('resumeBtn').hidden=!resumeVisible;$('resumeBtn').disabled=!body.ready;}
+function updateUI(){
+  const running=busySession(),c=running?config:getConfig();
+  for(const btn of document.querySelectorAll('.mode')){btn.classList.toggle('active',btn.dataset.mode===mode);btn.setAttribute('aria-pressed',btn.dataset.mode===mode);btn.disabled=running;}
+  for(const id of ['alias','duration','difficulty','circuit','lowImpact','assist'])$(id).disabled=running;
+  $('cameraBtn').disabled=phase==='loading';$('demoBtn').disabled=phase==='loading'||running;
+  $('cameraBtn').textContent=camera.active&&!running?'◉ Camera uitschakelen':'◉ Camera inschakelen';$('cameraBtn').disabled=phase==='loading'||running;
+  $('pauseBtn').disabled=!['countdown','playing','rest','paused'].includes(phase);$('pauseBtn').textContent=phase==='paused'?'▶ Verder':'Ⅱ Pauze';
+  $('stopBtn').disabled=!running;$('calibrateBtn').disabled=running||!(camera.active||demo);
+  $('demoControls').hidden=!demo;$('liveBadge').textContent=demo?'● DEMO':camera.active?'● CAMERA · LOKAAL':'○ SPEELVELD';$('liveBadge').classList.toggle('live',camera.active);
+  $('bodyText').textContent=body.message;$('bodyCheck').classList.toggle('ok',body.ok);$('bodyProgress').style.width=`${body.progress*100}%`;
+  $('gameInstruction').textContent=mode==='jump'&&c.lowImpact?'Hef één knie op als het obstakel de lijn onder je bereikt.':MODES[mode].instruction;
+  $('roundLabel').textContent=running?`RONDE ${roundIndex+1}/${session.order?.length||session.rounds.length}`:c.circuit?'3 GAMES · CIRCUIT':'ÉÉN SPELER';
+  const points=phase==='finished'&&latestSession?latestSession.rounds.reduce((n,r)=>n+r.score,0):(session&&running?session.rounds.reduce((n,r)=>n+r.score,0):0)+(game?.score||0);
+  $('score').textContent=String(points).padStart(4,'0');$('bestScore').textContent=`Record: ${store.best(scoreKey(c,mode))}`;
+  const remaining=phase==='finished'?0:phase==='rest'?rest:game?Math.max(0,c.duration-game.time):c.duration;
+  $('time').textContent=`${String(Math.floor(Math.ceil(remaining)/60)).padStart(2,'0')}:${String(Math.ceil(remaining)%60).padStart(2,'0')}`;
+  const statuses={off:'Klaar voor de start',loading:'Camera openen',calibrating:'Afstemmen op je lichaam',ready:'Klap boven je hoofd',countdown:'We beginnen zo',playing:MODES[mode].title,rest:'Hersteltijd',paused:'Gepauzeerd',tracking:'Trackingpauze',finished:'Sessie afgerond'};
+  $('roundStatus').textContent=statuses[phase];$('combo').replaceChildren(document.createTextNode(String(game?.combo||0)),Object.assign(document.createElement('span'),{textContent:'×'}));
+  const seconds=running?totalSeconds():latestSession&&phase==='finished'?latestSession.rounds.reduce((n,r)=>n+r.seconds,0):0;
+  $('activeTime').replaceChildren(document.createTextNode(String(Math.round(seconds))),Object.assign(document.createElement('span'),{textContent:'s'}));
+  const kcal=energy(seconds);$('energyReadout').textContent=kcal===null?'Elke beweging telt':`Rekenvoorbeeld: ~${kcal.toFixed(1)} kcal`;
+  if(phase==='off')overlay('◉','Stap het spel in.','Zet je camera aan. Jij verschijnt hier, met de targets om je heen.');
+  else if(phase==='loading')overlay('◌','Camera klaarzetten…','Geef toestemming voor de camera. Er wordt niets opgenomen.');
+  else if(phase==='calibrating')overlay('◎','Even afstemmen.',body.ready?'Sta 1,5 seconde stil met je armen omlaag.':'Ga helemaal in beeld staan. Houd ruimte boven je hoofd en onder je voeten.');
+  else if(phase==='ready')overlay('↟','Klap & go.',body.ready?'Houd je handen boven je hoofd, uit elkaar, en klap ze samen. Of gebruik de startknop.':body.message,body.ready);
+  else if(phase==='countdown')overlay(String(Math.max(1,Math.ceil(countdown))),game.time>0?'We gaan verder.':'Daar gaan we!','Kijk naar de camera en blijf in beeld.');
+  else if(phase==='playing')$('overlay').hidden=true;
+  else if(phase==='rest')overlay('◷',`${Math.ceil(rest)} s herstel`,'Loop rustig op de plaats. Adem uit. Kun je alweer een hele zin zeggen?');
+  else if(phase==='paused')overlay('Ⅱ','Neem je moment.','De tijd staat stil. Kom volledig in beeld en speel verder.',false,true);
+  else if(phase==='tracking')overlay('◎','Kom weer in beeld.',body.ready?'Je lichaam is weer zichtbaar. Druk op verder spelen.':body.message,false,true);
+  else if(phase==='finished')overlay('✦','Ronde achter de rug.',demo?'Demo afgerond. Probeer het nu met je camera.':'Bekijk je resultaat en bespreek je inspanning. Klap om een nieuwe sessie te starten.',body.ready);
+  $('startBtn').textContent=phase==='finished'?'Nieuwe sessie':'Start ronde';
+}
+$('startBtn').addEventListener('click',()=>{if(phase==='finished'){phase='ready';begin();}});
+function demoFrame(now,dt){
+  const p=makeDemoPose();
+  if(keys.has('ArrowLeft'))headOffset-=dt*.27;if(keys.has('ArrowRight'))headOffset+=dt*.27;headOffset=clamp(headOffset,-.22,.22);
+  for(const i of [0,7,8,11,12])p[i].x+=headOffset;
+  if(mouse&&phase!=='calibrating'){p[16].x=mouse.x;p[16].y=mouse.y;p[14].x=(p[12].x+mouse.x)/2;p[14].y=(p[12].y+mouse.y)/2;}
+  if(now<jumpUntil){if(getConfig().lowImpact){p[25].y=.59;p[27].y=.72;p[31].y=.74;p[29].y=.73;}else for(const point of p)point.y-=.07;}
+  if(now<clapUntil){const spread=clapUntil-now>230?.12:.015;p[15].x=.5-spread;p[16].x=.5+spread;p[15].y=.1;p[16].y=.1;}
+  receivePose([p.map(point=>({...point,x:1-point.x}))],now);
+}
+$('gameCanvas').addEventListener('pointermove',e=>{if(demo)mouse=renderer.pointer(e.clientX,e.clientY);});
+document.addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName)||document.querySelector('dialog[open]'))return;
+  if(['ArrowLeft','ArrowRight','Space'].includes(e.code)&&demo){e.preventDefault();keys.add(e.code);if(e.code==='Space'&&!e.repeat)jumpUntil=performance.now()+550;}
+  if(e.code==='KeyB'&&demo&&!e.repeat)clapUntil=performance.now()+600;
+  if(e.code==='KeyP'&&!e.repeat){if(phase==='paused')resume();else pause();}
+  if(e.code==='Escape')pause();
+});
+document.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',()=>{keys.clear();pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();releaseWakeLock();}else if(busySession())requestWakeLock();});
+window.addEventListener('pagehide',()=>{sourceGeneration++;camera.stop();releaseWakeLock();});
+function frame(now){
+  const dt=Math.min((now-lastFrame)/1000,.1);lastFrame=now;
+  if(demo)demoFrame(now,dt);else if(camera.active){
+    const aspect=$('video').videoWidth/$('video').videoHeight;
+    if(aspect&&Math.abs(aspect-currentAspect)>.05){currentAspect=aspect;if(busySession())finish(false);resetTracking();phase='calibrating';}
+    camera.frame(now);
+    if(now-lastPoseAt>450){body=gate.update([],now,currentAspect);pose=null;clap.update(null,now);if(phase==='calibrating')calibration.reset();trackingPause();}
+  }else if(!demo&&['calibrating','ready','playing','countdown'].includes(phase)){body=gate.update([],now,currentAspect);pose=null;trackingPause();}
+  if(phase==='finished'&&body.ready&&clap.update(pose,now,currentAspect)){phase='ready';begin();}
+  if(phase==='countdown'){
+    if(!body.ready)trackingPause();else{const before=Math.ceil(countdown);countdown-=dt;if(Math.ceil(countdown)!==before)beep(500,.08);if(countdown<=0){phase='playing';beep(850,.1);}}
+  }else if(phase==='playing'){
+    if(!body.ready||!pose)trackingPause();else{game.tick(Math.min(dt,config.duration-game.time),pose);if(game.lastAction)beep(game.lastAction==='hit'?700:220,.06);if(game.time>=config.duration-.001)roundDone();}
+  }else if(phase==='rest'){
+    rest=Math.max(0,rest-dt);
+    if(rest<=0&&body.ready){roundIndex++;newRound();}
+  }
+  renderer.render({camera:camera.active,demo,pose,game,base:calibration.value,skeleton:$('skeleton').checked,mode,now});
+  if(now-uiAt>100){updateUI();uiAt=now;$('trackingRate').textContent=camera.active&&camera.inferenceMs?`Herkenning ~${Math.min(20,Math.round(1000/Math.max(50,camera.inferenceMs*1.15)))} fps`:demo?'DEMO · B = klappen':'';}
+  requestAnimationFrame(frame);
+}
+updateUI();requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
